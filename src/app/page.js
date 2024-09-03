@@ -1,7 +1,7 @@
 import React from "react";
 
 function page() {
-  return <div>ayush rand hai</div>;
+  return <div>page</div>;
 }
 
 export default page;
