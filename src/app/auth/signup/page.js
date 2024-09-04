@@ -5,6 +5,8 @@ import {
   createUserWithEmailAndPassword,
   RecaptchaVerifier,
   signInWithPhoneNumber,
+  PhoneAuthProvider,
+  signInWithCredential,
 } from "firebase/auth";
 
 const Signup = () => {
@@ -25,17 +27,18 @@ const Signup = () => {
   };
 
   const setupRecaptcha = () => {
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: () => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-          handleSignupWithPhoneNumber();
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",
+        {
+          size: "invisible",
+          callback: () => {
+            handleSignupWithPhoneNumber();
+          },
         },
-      },
-      auth
-    );
+        auth
+      );
+    }
   };
 
   const handleSignupWithPhoneNumber = async () => {
@@ -55,12 +58,9 @@ const Signup = () => {
   };
 
   const handleVerifyOtp = async () => {
-    const credential = firebase.auth.PhoneAuthProvider.credential(
-      verificationId,
-      otp
-    );
+    const credential = PhoneAuthProvider.credential(verificationId, otp);
     try {
-      await auth.signInWithCredential(credential);
+      await signInWithCredential(auth, credential);
       alert("Phone authentication successful!");
     } catch (error) {
       alert(error.message);
@@ -68,44 +68,63 @@ const Signup = () => {
   };
 
   return (
-    <div>
-      <h1>Sign Up</h1>
-      <div>
-        <h2>Sign Up with Email</h2>
+    <div className="container mx-auto max-w-md p-4">
+      <h1 className="text-2xl font-bold text-center mb-6">Sign Up</h1>
+      <div className="mb-6">
+        <h2 className="text-xl mb-2">Sign Up with Email</h2>
         <input
           type="email"
+          className="w-full p-2 mb-2 border border-gray-300 rounded"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
+          className="w-full p-2 mb-4 border border-gray-300 rounded"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button onClick={handleSignupWithEmail}>Sign Up with Email</button>
+        <button
+          onClick={handleSignupWithEmail}
+          className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Sign Up with Email
+        </button>
       </div>
       <div>
-        <h2>Sign Up with Phone Number</h2>
+        <h2 className="text-xl mb-2">Sign Up with Phone Number</h2>
         <input
           type="tel"
+          className="w-full p-2 mb-2 border border-gray-300 rounded"
           placeholder="Phone Number"
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
         />
         <div id="recaptcha-container"></div>
         {!isOtpSent ? (
-          <button onClick={handleSignupWithPhoneNumber}>Send OTP</button>
+          <button
+            onClick={handleSignupWithPhoneNumber}
+            className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Send OTP
+          </button>
         ) : (
           <div>
             <input
               type="text"
+              className="w-full p-2 mb-2 border border-gray-300 rounded"
               placeholder="Enter OTP"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
             />
-            <button onClick={handleVerifyOtp}>Verify OTP</button>
+            <button
+              onClick={handleVerifyOtp}
+              className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              Verify OTP
+            </button>
           </div>
         )}
       </div>

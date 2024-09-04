@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "../context/AuthContext";
 import LandingPage from "@/components/landingpage"; // Corrected component import
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Navbar from "@/components/navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,6 +35,18 @@ function AuthLayout({ children }) {
     }
   }, [user, loading, router]);
 
+  // Handle sign-out scenario
+  useEffect(() => {
+    const handleSignOut = async () => {
+      // If user is signed out, redirect to landing page
+      if (!user) {
+        router.push("/");
+      }
+    };
+
+    handleSignOut();
+  }, [user, router]);
+
   if (loading) {
     return <p>Loading...</p>; // Optional: Replace with a spinner or loading component
   }
@@ -46,6 +59,7 @@ export default function RootLayout({ children }) {
     <AuthProvider>
       <html lang="en">
         <body className={inter.className}>
+          <Navbar />
           <AuthLayout>{children}</AuthLayout>
         </body>
       </html>

@@ -1,11 +1,14 @@
 "use client";
 import { useState } from "react";
-import { auth } from "@/lib/firebaseconfig";
 import {
+  RecaptchaVerifier,
   signInWithEmailAndPassword,
   signInWithPhoneNumber,
-  RecaptchaVerifier,
+  PhoneAuthProvider,
+  signInWithCredential,
 } from "firebase/auth";
+import { auth } from "@/lib/firebaseconfig";
+import { useRouter } from "next/navigation";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,27 +17,30 @@ const Login = () => {
   const [otp, setOtp] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [verificationId, setVerificationId] = useState(null);
-
+  const router = useRouter();
   const handleLoginWithEmail = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       alert("Login successful!");
+      router.replace("/home");
     } catch (error) {
       alert(error.message);
     }
   };
 
   const setupRecaptcha = () => {
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: () => {
-          handleLoginWithPhoneNumber();
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",
+        {
+          size: "invisible",
+          callback: () => {
+            handleLoginWithPhoneNumber();
+          },
         },
-      },
-      auth
-    );
+        auth
+      );
+    }
   };
 
   const handleLoginWithPhoneNumber = async () => {
@@ -54,57 +60,74 @@ const Login = () => {
   };
 
   const handleVerifyOtp = async () => {
-    const credential = firebase.auth.PhoneAuthProvider.credential(
-      verificationId,
-      otp
-    );
+    const credential = PhoneAuthProvider.credential(verificationId, otp);
     try {
-      await auth.signInWithCredential(credential);
+      await signInWithCredential(auth, credential);
       alert("Phone authentication successful!");
+      router.replace("/home");
     } catch (error) {
       alert(error.message);
     }
   };
 
   return (
-    <div>
-      <h1>Login</h1>
-      <div>
-        <h2>Login with Email</h2>
+    <div className="container mx-auto max-w-md p-4">
+      <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
+      <div className="mb-6">
+        <h2 className="text-xl mb-2">Login with Email</h2>
         <input
           type="email"
+          className="w-full p-2 mb-2 border border-gray-300 rounded"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
+          className="w-full p-2 mb-4 border border-gray-300 rounded"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button onClick={handleLoginWithEmail}>Login with Email</button>
+        <button
+          onClick={handleLoginWithEmail}
+          className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Login with Email
+        </button>
       </div>
       <div>
-        <h2>Login with Phone Number</h2>
+        <h2 className="text-xl mb-2">Login with Phone Number</h2>
         <input
           type="tel"
+          className="w-full p-2 mb-2 border border-gray-300 rounded"
           placeholder="Phone Number"
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
         />
         <div id="recaptcha-container"></div>
         {!isOtpSent ? (
-          <button onClick={handleLoginWithPhoneNumber}>Send OTP</button>
+          <button
+            onClick={handleLoginWithPhoneNumber}
+            className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Send OTP
+          </button>
         ) : (
           <div>
             <input
               type="text"
+              className="w-full p-2 mb-2 border border-gray-300 rounded"
               placeholder="Enter OTP"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
             />
-            <button onClick={handleVerifyOtp}>Verify OTP</button>
+            <button
+              onClick={handleVerifyOtp}
+              className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              Verify OTP
+            </button>
           </div>
         )}
       </div>
