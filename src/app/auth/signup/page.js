@@ -88,7 +88,7 @@ const Signup = () => {
         />
         <button
           onClick={handleSignupWithEmail}
-          className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="w-full p-2 bg-red-900 text-white rounded hover:bg-orange-600"
         >
           Sign Up with Email
         </button>
@@ -106,7 +106,7 @@ const Signup = () => {
         {!isOtpSent ? (
           <button
             onClick={handleSignupWithPhoneNumber}
-            className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600"
+            className="w-full p-2 bg-red-900 text-white rounded hover:bg-orange-600"
           >
             Send OTP
           </button>

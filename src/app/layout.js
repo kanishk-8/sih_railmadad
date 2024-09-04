@@ -8,6 +8,7 @@ import LandingPage from "@/components/landingpage"; // Corrected component impor
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Navbar from "@/components/navbar";
+import "@fortawesome/react-fontawesome";
 
 const inter = Inter({ subsets: ["latin"] });
 
