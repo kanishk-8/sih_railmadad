@@ -3,12 +3,11 @@
 
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "../utils/i18n"; // Import the i18n configuration
 import { AuthProvider, useAuth } from "../context/AuthContext";
-import LandingPage from "@/components/landingpage"; // Corrected component import
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Navbar from "@/components/navbar";
-import "@fortawesome/react-fontawesome";
 
 const inter = Inter({ subsets: ["latin"] });
 
