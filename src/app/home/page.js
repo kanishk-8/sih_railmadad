@@ -1,3 +1,4 @@
+import Footer from "@/components/Footer";
 import React from "react";
 
 function Page() {
@@ -11,6 +12,7 @@ function Page() {
         {/* Your content */}
         <div className="text-red-900 text-4xl font-bold p-8">Page</div>
       </div>
+      <Footer />
     </div>
   );
 }
