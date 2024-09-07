@@ -1,3 +1,5 @@
+"use client";
+import ChatBot from "@/components/chatbot";
 import Footer from "@/components/Footer";
 import React from "react";
 
@@ -10,7 +12,7 @@ function Page() {
       {/* Acrylic Effect */}
       <div className="absolute inset-0 bg-white/30 backdrop-blur-sm">
         {/* Your content */}
-        <div className="text-red-900 text-4xl font-bold p-8">Page</div>
+        <ChatBot />
       </div>
       <Footer />
     </div>
