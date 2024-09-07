@@ -1,61 +1,57 @@
-import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
+// pages/api/upload.js
+
 import formidable from "formidable";
+import fs from "fs";
+import path from "path";
+import { promisify } from "util";
+
+const form = new formidable.IncomingForm({
+  keepExtensions: true, // Keep the file extensions
+  uploadDir: path.join(process.cwd(), "public/uploads"), // Directory to save the files
+});
+
+const mkdir = promisify(fs.mkdir);
+
 export const config = {
   api: {
-    bodyParser: false, // Disable the default body parser for handling file uploads
+    bodyParser: false, // Disable default body parsing
   },
 };
 
-const formidable = require("formidable"); // For file parsing
-
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const form = new formidable.IncomingForm();
-
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        res.status(500).json({ error: "Failed to parse the file" });
-        return;
-      }
-
-      const file = files.file; // Get the uploaded file from the request
-      // If no file is uploaded, just return an empty response with success status.
-      if (!file) {
-        res.status(200).json({ fileUri: null, mimeType: null });
-        return;
-      }
-
-      try {
-        const fileManager = new GoogleAIFileManager('AIzaSyB69yTMIeO9VbqvlT9LR9AWipxZJfe9X6o'); // Use your environment variable
-        const uploadResult = await fileManager.uploadFile(file.filepath, {
-          mimeType: file.mimetype,
-          displayName: file.originalFilename,
+    try {
+      const { fields, files } = await new Promise((resolve, reject) => {
+        form.parse(req, (err, fields, files) => {
+          if (err) reject(err);
+          resolve({ fields, files });
         });
-        console.log(uploadResult)
+      });
 
-        let uploadedFile = await fileManager.getFile(uploadResult.file.name);
-        
-        // Polling for the file state to check if it's finished processing
-        while (uploadedFile.state === FileState.PROCESSING) {
-          await new Promise((resolve) => setTimeout(resolve, 10_000)); // Sleep for 10 seconds
-          uploadedFile = await fileManager.getFile(uploadResult.file.name);
-        }
+      const file = files.file[0]; // Assuming 'file' is the field name
 
-        if (uploadedFile.state === FileState.FAILED) {
-          throw new Error("File processing failed.");
-        }
-
-        // Send back the file URI and mimeType for further use
-        res.status(200).json({
-          fileUri: uploadResult.file.uri,
-          mimeType: file.mimetype,
-        });
-      } catch (error) {
-        console.error("Error uploading file to Google Generative AI:", error);
-        res.status(500).json({ error: "File upload failed" });
+      // Ensure the uploads directory exists
+      const uploadDir = path.join(process.cwd(), "public/uploads");
+      if (!fs.existsSync(uploadDir)) {
+        await mkdir(uploadDir, { recursive: true });
       }
-    });
+
+      // Generate a unique file name
+      const fileName = `${Date.now()}-${file.originalFilename}`;
+      const filePath = path.join(uploadDir, fileName);
+
+      // Move the file to the desired location
+      fs.renameSync(file.filepath, filePath);
+
+      // Respond with the file URL
+      const fileUri = `/uploads/${fileName}`;
+      res.status(200).json({ fileUri, mimeType: file.mimetype });
+    } catch (error) {
+      console.error("Error handling file upload:", error);
+      res.status(500).json({ error: "File upload failed" });
+    }
   } else {
-    res.status(405).json({ error: "Method not allowed" });
+    res.setHeader("Allow", ["POST"]);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }

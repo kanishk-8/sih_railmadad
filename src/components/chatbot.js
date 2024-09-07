@@ -10,7 +10,6 @@ function ChatBot() {
   const [listening, setListening] = useState(false);
 
   // Initialize the Google Generative AI client with your API key
-  const genAI = new GoogleGenerativeAI('AIzaSyB69yTMIeO9VbqvlT9LR9AWipxZJfe9X6o'); // Use environment variable for security
 
   // Web Speech API for Speech-to-Text
   const SpeechRecognition =
@@ -46,59 +45,57 @@ function ChatBot() {
   };
 
   const handleSendMessage = async () => {
-    if (!inputValue && !file) return; // Ensure that either text or file is provided
-  
+    if (!inputValue && !file) return;
+
     const newMessage = {
       text: inputValue || null,
       isBot: false,
-      file: file ? URL.createObjectURL(file) : null, // Show a preview of the uploaded file
+      file: file ? URL.createObjectURL(file) : null,
     };
-  
-    // Show the user message
+
     setMessages([...messages, newMessage]);
     setInputValue("");
-    setFile(null); // Reset file input
-    setFilePreview(null); // Reset file preview
-  
+    setFile(null);
+    setFilePreview(null);
+
     setLoading(true);
     try {
       let fileUri = null;
       let mimeType = null;
-  
-      // Only upload if a file is provided
+
       if (file) {
         const formData = new FormData();
-        formData.append("file", file); // Append the file if it's uploaded
-  
+        formData.append("file", file); // Append the file
+
         const res = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         });
-  
+
         if (!res.ok) throw new Error("File upload failed");
-        
+
         const result = await res.json();
         fileUri = result.fileUri;
         mimeType = result.mimeType;
       }
-  
-      // Call the Google Generative AI API with or without a file
+
+      // Call the AI API after the file has been uploaded
       const genRes = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileUri, mimeType, prompt: inputValue }),
       });
-  
+
       if (!genRes.ok) throw new Error("Error generating AI response");
-  
+
       const { message } = await genRes.json();
-  
+
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: message, isBot: true }, // Add the bot's response
+        { text: message, isBot: true },
       ]);
     } catch (error) {
-      console.error("Error communicating with the API:", error);
+      console.error("Error:", error);
       setMessages((prevMessages) => [
         ...prevMessages,
         { text: "Error communicating with the API.", isBot: true },
@@ -106,7 +103,7 @@ function ChatBot() {
     }
     setLoading(false);
   };
-  
+
   return (
     <div className="flex flex-col h-2/3 m-5 p-8 rounded-xl bg-gray-100">
       <div className="flex-grow overflow-y-auto bg-white p-4 rounded-md shadow-md">
