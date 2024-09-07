@@ -59,8 +59,16 @@ export default function RootLayout({ children }) {
     <AuthProvider>
       <html lang="en">
         <body className={inter.className}>
-          <Navbar />
-          <AuthLayout>{children}</AuthLayout>
+          <div
+            className="relative h-screen bg-cover bg-center"
+            style={{ backgroundImage: "url('/image.png')" }}
+          >
+            {/* Acrylic Effect */}
+            <div className="absolute inset-0 bg-white/30 backdrop-blur-sm">
+              <Navbar />
+              <AuthLayout>{children}</AuthLayout>
+            </div>
+          </div>
         </body>
       </html>
     </AuthProvider>

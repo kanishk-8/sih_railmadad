@@ -8,6 +8,7 @@ import {
   PhoneAuthProvider,
   signInWithCredential,
 } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -16,11 +17,13 @@ const Signup = () => {
   const [otp, setOtp] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [verificationId, setVerificationId] = useState(null);
+  const router = useRouter();
 
   const handleSignupWithEmail = async () => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       alert("Signup successful!");
+      Router.replace("/home");
     } catch (error) {
       alert(error.message);
     }

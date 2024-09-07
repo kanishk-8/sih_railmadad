@@ -43,7 +43,7 @@ function Navbar() {
   };
 
   return (
-    <nav className="w-full flex items-center">
+    <nav className="w-full flex items-center bg-white">
       <Link href="/" className="flex items-center justify-center mr-4">
         <Image src="/logo.png" alt="logo" width={200} height={50} />
         <div className="flex flex-col">
@@ -51,7 +51,7 @@ function Navbar() {
           <p>{t("for_inquiry_assistance")}</p>
         </div>
       </Link>
-      <div className="flex justify-center items-center mr-9">
+      <div className="flex justify-center items-center mr-7 w-72">
         <button
           onClick={() => window.open("tel:139")}
           className="flex justify-center items-center gap-2 border-2 w-28 h-14 border-white text-white bg-red-900 p-2 rounded-md animate-pulse"
@@ -63,7 +63,7 @@ function Navbar() {
       </div>
 
       {user && (
-        <div className="mr-4">
+        <div className="mr-3">
           <button
             onClick={signout}
             className="border-2 w-20 border-white text-white bg-red-900 p-2 rounded-md"
@@ -73,7 +73,7 @@ function Navbar() {
         </div>
       )}
       {!user && (
-        <div className="flex justify-between gap-2 mr-4">
+        <div className="flex justify-between gap-2 mr-3">
           <Link href="/admin">
             <button className="border-2 w-20 border-white bg-blue-200 hover:bg-red-900 hover:text-white p-2 rounded-md">
               Admin
@@ -93,7 +93,7 @@ function Navbar() {
       )}
 
       {/* Language Switcher */}
-      <div className="ml-auto flex space-x-2">
+      <div className="ml-auto flex justify-between mr-3">
         <button
           onClick={() => handleLanguageChange("en")}
           className="text-black border-2 border-black p-2 rounded-md"
@@ -102,7 +102,7 @@ function Navbar() {
         </button>
         <button
           onClick={() => handleLanguageChange("hi")}
-          className="text-black border-2 border-black p-2 rounded-md"
+          className="text-black border-2 border-black p-2 rounded-md ml-2"
         >
           HI
         </button>
@@ -110,7 +110,7 @@ function Navbar() {
         {/* Google-like Microphone Icon */}
         <button
           onClick={handleMicrophoneClick}
-          className="ml-4 text-black border-2 border-black p-2 rounded-md"
+          className="ml-2 text-black border-2 border-black p-2 rounded-md "
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
