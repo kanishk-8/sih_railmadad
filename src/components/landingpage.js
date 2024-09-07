@@ -17,6 +17,7 @@ const LandingPage = () => {
     { name: "UTS Ticketing", icon: "uts-ticketing-icon.jpg", link: "/uts-ticketing" },
     { name: "Freight Business", icon: "freight-business-icon.png", link: "/freight-business" },
     { name: "Railway Parcel Website", icon: "railway-parcel-icon.png", link: "/railway-parcel" },
+    // Removed the Basic Support entry
   ];
 
   const sidebarOptions = [
@@ -75,3 +76,4 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
+
