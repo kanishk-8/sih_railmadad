@@ -46,50 +46,50 @@ function ChatBot() {
 
   const handleSendMessage = async () => {
     if (!inputValue && !file) return;
-
+  
     const newMessage = {
       text: inputValue || null,
       isBot: false,
       file: file ? URL.createObjectURL(file) : null,
     };
-
+  
     setMessages([...messages, newMessage]);
     setInputValue("");
     setFile(null);
     setFilePreview(null);
-
+  
     setLoading(true);
     try {
       let fileUri = null;
       let mimeType = null;
-
+  
       if (file) {
         const formData = new FormData();
-        formData.append("file", file); // Append the file
-
-        const res = await fetch("/api/upload", {
+        formData.append("file", file);
+  
+        const res = await fetch("http://localhost:5000/api/upload", {
           method: "POST",
           body: formData,
         });
-
+  
         if (!res.ok) throw new Error("File upload failed");
-
+  
         const result = await res.json();
         fileUri = result.fileUri;
         mimeType = result.mimeType;
       }
-
+  
       // Call the AI API after the file has been uploaded
-      const genRes = await fetch("/api/generate", {
+      const genRes = await fetch("http://localhost:5000/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileUri, mimeType, prompt: inputValue }),
       });
-
+  
       if (!genRes.ok) throw new Error("Error generating AI response");
-
+  
       const { message } = await genRes.json();
-
+  
       setMessages((prevMessages) => [
         ...prevMessages,
         { text: message, isBot: true },
@@ -103,7 +103,7 @@ function ChatBot() {
     }
     setLoading(false);
   };
-
+  
   return (
     <div className="flex flex-col h-2/3 m-5 p-8 rounded-xl bg-gray-100">
       <div className="flex-grow overflow-y-auto bg-white p-4 rounded-md shadow-md">

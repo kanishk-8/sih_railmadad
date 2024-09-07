@@ -1,57 +1,106 @@
-// pages/api/upload.js
+import fs from 'fs';
+import path from 'path';
+import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-import formidable from "formidable";
-import fs from "fs";
-import path from "path";
-import { promisify } from "util";
-
-const form = new formidable.IncomingForm({
-  keepExtensions: true, // Keep the file extensions
-  uploadDir: path.join(process.cwd(), "public/uploads"), // Directory to save the files
-});
-
-const mkdir = promisify(fs.mkdir);
+const fileManager = new GoogleAIFileManager('AIzaSyB69yTMIeO9VbqvlT9LR9AWipxZJfe9X6o');
 
 export const config = {
   api: {
-    bodyParser: false, // Disable default body parsing
+    bodyParser: false, // Disable the default body parser to handle multipart form manually
   },
 };
 
-export default async function handler(req, res) {
-  if (req.method === "POST") {
-    try {
-      const { fields, files } = await new Promise((resolve, reject) => {
-        form.parse(req, (err, fields, files) => {
-          if (err) reject(err);
-          resolve({ fields, files });
-        });
-      });
-
-      const file = files.file[0]; // Assuming 'file' is the field name
-
-      // Ensure the uploads directory exists
-      const uploadDir = path.join(process.cwd(), "public/uploads");
-      if (!fs.existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
-      }
-
-      // Generate a unique file name
-      const fileName = `${Date.now()}-${file.originalFilename}`;
-      const filePath = path.join(uploadDir, fileName);
-
-      // Move the file to the desired location
-      fs.renameSync(file.filepath, filePath);
-
-      // Respond with the file URL
-      const fileUri = `/uploads/${fileName}`;
-      res.status(200).json({ fileUri, mimeType: file.mimetype });
-    } catch (error) {
-      console.error("Error handling file upload:", error);
-      res.status(500).json({ error: "File upload failed" });
-    }
-  } else {
-    res.setHeader("Allow", ["POST"]);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+// Helper to handle saving uploaded files
+async function saveUploadedFile(req) {
+  const uploadDir = path.join(process.cwd(), 'public/uploads');
+  
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
   }
+
+  const boundary = req.headers['content-type'].split('boundary=')[1];
+  let body = '';
+
+  // Collect the file upload data
+  await new Promise((resolve, reject) => {
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', () => resolve());
+    req.on('error', err => reject(err));
+  });
+
+  // Extract file content from the multipart form-data
+  const fileData = body.split(`--${boundary}`).filter(part => part.includes('Content-Disposition'))[0];
+  const [header, content] = fileData.split('\r\n\r\n');
+  const filenameMatch = /filename="([^"]+)"/.exec(header);
+  const filename = filenameMatch ? filenameMatch[1] : `file-${Date.now()}`;
+
+  // Save the file locally
+  const filePath = path.join(uploadDir, filename.trim());
+  fs.writeFileSync(filePath, content.split('\r\n')[0], 'binary');
+
+  return filePath;
+}
+
+// Named export for the POST method
+export async function POST(req) {
+  try {
+    // Save the uploaded file locally
+    const savedFilePath = await saveUploadedFile(req);
+    console.log(`File saved locally at: ${savedFilePath}`);
+
+    // Upload the file to Google Generative AI (Gemini)
+    const uploadResult = await fileManager.uploadFile(savedFilePath, {
+      mimeType: 'image/png', // Adjust based on the file type
+      displayName: path.basename(savedFilePath),
+    });
+
+    console.log(`Uploaded file: ${uploadResult.file.displayName} as: ${uploadResult.file.uri}`);
+
+    // Initialize Google Generative AI (Gemini)
+    const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    // Send the uploaded file to Google Generative AI for content generation
+    const result = await model.generateContent([
+      'Tell me about this image.',
+      {
+        fileData: {
+          fileUri: uploadResult.file.uri,
+          mimeType: uploadResult.file.mimeType,
+        },
+      },
+    ]);
+
+    // Respond with the generated content
+    return new Response(
+      JSON.stringify({
+        message: result.response.text(),
+        fileUri: uploadResult.file.uri,
+      }),
+      {
+        status: 200,
+      }
+    );
+  } catch (error) {
+    console.error('Error during file upload or processing:', error);
+    return new Response(
+      JSON.stringify({ error: 'File upload or processing failed.', details: error.message }),
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+// For unsupported HTTP methods
+export async function OPTIONS() {
+  return new Response(
+    JSON.stringify({ message: 'Method not allowed' }),
+    {
+      status: 405,
+    }
+  );
 }

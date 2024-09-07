@@ -6,7 +6,7 @@ export async function POST(req, res) {
     const { fileUri, mimeType, prompt } = await req.json(); // Parse JSON body
 
     // Initialize with the API key from environment variables
-    const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_Gemini);
+    const genAI = new GoogleGenerativeAI('AIzaSyB69yTMIeO9VbqvlT9LR9AWipxZJfe9X6o');
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     let result;
