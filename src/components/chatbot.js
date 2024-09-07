@@ -10,7 +10,7 @@ function ChatBot() {
   const [listening, setListening] = useState(false);
 
   // Initialize the Google Generative AI client with your API key
-  const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_Gemini); // Use environment variable for security
+  const genAI = new GoogleGenerativeAI('AIzaSyB69yTMIeO9VbqvlT9LR9AWipxZJfe9X6o'); // Use environment variable for security
 
   // Web Speech API for Speech-to-Text
   const SpeechRecognition =
@@ -47,44 +47,58 @@ function ChatBot() {
 
   const handleSendMessage = async () => {
     if (!inputValue && !file) return; // Ensure that either text or file is provided
-
+  
     const newMessage = {
-      text: inputValue || (file && file.name),
+      text: inputValue || null,
       isBot: false,
       file: file ? URL.createObjectURL(file) : null, // Show a preview of the uploaded file
     };
-
+  
     // Show the user message
     setMessages([...messages, newMessage]);
     setInputValue("");
     setFile(null); // Reset file input
     setFilePreview(null); // Reset file preview
-
-    // Call the Google Generative AI API
+  
     setLoading(true);
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Get the appropriate model
-
-      let botMessage = "";
+      let fileUri = null;
+      let mimeType = null;
+  
+      // Only upload if a file is provided
       if (file) {
-        // Send file to the model for analysis
-        const fileData = new FormData();
-        fileData.append("file", file);
-
-        const result = await model.analyzeFile(fileData); // Assuming this method can process files
-        botMessage = result.response.text(); // Get the analysis result for the file
-      } else if (inputValue) {
-        // Send text to the model for processing
-        const result = await model.generateContent(inputValue); // Generate content based on user input
-        botMessage = result.response.text(); // Get the bot's response for text input
+        const formData = new FormData();
+        formData.append("file", file); // Append the file if it's uploaded
+  
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+  
+        if (!res.ok) throw new Error("File upload failed");
+        
+        const result = await res.json();
+        fileUri = result.fileUri;
+        mimeType = result.mimeType;
       }
-
+  
+      // Call the Google Generative AI API with or without a file
+      const genRes = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUri, mimeType, prompt: inputValue }),
+      });
+  
+      if (!genRes.ok) throw new Error("Error generating AI response");
+  
+      const { message } = await genRes.json();
+  
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: botMessage, isBot: true }, // Add the bot's response
+        { text: message, isBot: true }, // Add the bot's response
       ]);
     } catch (error) {
-      console.error("Error calling Google Generative AI API:", error);
+      console.error("Error communicating with the API:", error);
       setMessages((prevMessages) => [
         ...prevMessages,
         { text: "Error communicating with the API.", isBot: true },
@@ -92,7 +106,7 @@ function ChatBot() {
     }
     setLoading(false);
   };
-
+  
   return (
     <div className="flex flex-col h-2/3 m-5 p-8 rounded-xl bg-gray-100">
       <div className="flex-grow overflow-y-auto bg-white p-4 rounded-md shadow-md">
@@ -111,13 +125,24 @@ function ChatBot() {
                   className="w-6 h-6 mr-3"
                 />
               )}
-              <span>{message.text}</span>
-              {message.file && (
-                <img
+              {/* Render text only if available */}
+              {message.text && <span>{message.text}</span>}
+              {/* Render image or video only if available */}
+              {message.file && message.file.includes("video") ? (
+                <video
+                  controls
                   src={message.file}
-                  alt="Uploaded File"
-                  className="ml-3 w-12 h-12 rounded-md"
+                  alt="Uploaded Video"
+                  className="ml-3 w-16 h-16 rounded-md"
                 />
+              ) : (
+                message.file && (
+                  <img
+                    src={message.file}
+                    alt="Uploaded Image"
+                    className="ml-3 w-16 h-16 rounded-md"
+                  />
+                )
               )}
             </div>
           ))}
@@ -137,14 +162,25 @@ function ChatBot() {
         {/* Show a preview of the uploaded image or video */}
         {filePreview && (
           <div className="relative">
-            <img
-              src={filePreview}
-              alt="Preview"
-              className="w-16 h-16 rounded-lg object-cover mr-2"
-            />
+            {filePreview.includes("video") ? (
+              <video
+                controls
+                src={filePreview}
+                className="w-16 h-16 rounded-lg object-cover mr-2"
+              />
+            ) : (
+              <img
+                src={filePreview}
+                alt="Preview"
+                className="w-16 h-16 rounded-lg object-cover mr-2"
+              />
+            )}
             <button
               className="absolute top-0 right-0 text-red-500"
-              onClick={() => setFilePreview(null)} // Remove preview
+              onClick={() => {
+                setFilePreview(null);
+                setFile(null);
+              }} // Remove preview
             >
               ❌
             </button>
