@@ -61,14 +61,13 @@ def upload_file():
     print(f"File not allowed: {file.filename}")
     return jsonify({'error': 'File not allowed'}), 400
 
-# Endpoint to generate AI response based on file and prompt
+# Endpoint to generate AI response based on file and prompt# Endpoint to generate AI response based on file and prompt
 @app.route('/api/generate', methods=['POST'])
 def generate_content():
     data = request.get_json()
 
-    # Ensure the required fields are present
+    # Extract the fileUri, prompt, and mimeType from the request
     file_uri = data.get('fileUri')
-    file_uri=genai.get_file(file_uri)
     prompt = data.get('prompt')
     mime_type = data.get('mimeType')
 
@@ -84,10 +83,20 @@ def generate_content():
 
         # Prepare input, combining the file and the prompt
         input_data = []
+        
+        # Handle the case where there's a file
         if file_uri:
+            file_uri = genai.get_file(file_uri)  # Fetch the file from the AI service
             input_data.append(file_uri)
+
+        # Handle the case where there's a text prompt
         if prompt:
-            input_data.append("\n\n" + prompt)
+            input_data.append("\n\n" + prompt)  # Add prompt with proper formatting
+
+        # Check if input_data is empty (should not happen due to earlier validation)
+        if not input_data:
+            print("No valid input data")
+            return jsonify({'error': 'No valid input data'}), 400
 
         print(f"Sending request to Generative AI with input: {input_data}")
         result = model.generate_content(input_data)
@@ -101,6 +110,7 @@ def generate_content():
     except Exception as e:
         print(f"Error generating content: {e}")
         return jsonify({'error': 'Error generating AI response'}), 500
+
 
 if __name__ == '__main__':
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
