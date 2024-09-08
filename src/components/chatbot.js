@@ -10,7 +10,16 @@ function ChatBot() {
   const [pnrValid, setPnrValid] = useState(null); // State for PNR validation
   const [pnr, setPnr] = useState(""); // State for the PNR number
   const [waitingForMoreComplaints, setWaitingForMoreComplaints] = useState(false);
+  let user = null;
+  let useremail = null;
 
+  if (auth.currentUser) {
+  user = auth.currentUser;
+  useremail = auth.currentUser.email;
+  console.log(user.uid, useremail);
+  } else {
+  console.log("No current user");
+  }
   const complaintOptions = [
     "Train",
     "Station",

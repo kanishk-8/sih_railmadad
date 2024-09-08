@@ -17,7 +17,7 @@ api_key = "AIzaSyB69yTMIeO9VbqvlT9LR9AWipxZJfe9X6o"
 genai.configure(api_key=api_key)
 
 # Configure upload folder
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'static'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Allowed extensions for upload
@@ -33,7 +33,7 @@ def extract_filename(image_path):
 def get_full_image_path(image_path):
     if image_path:
         # Define the base URL where images are served
-        base_url = "http://localhost:5000/uploads/"
+        base_url = "http://localhost:5000/static/"
         # Extract the filename from the full path
         filename = extract_filename(image_path)
         # Construct the full URL path
