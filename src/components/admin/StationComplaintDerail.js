@@ -39,7 +39,7 @@ const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
     : null;
 
   return (
-    <div className="p-4 border rounded shadow">
+    <div className="p-4 border rounded-xl shadow bg-white m-3">
       <h3 className="text-xl font-bold">Station Complaint Details</h3>
       <p>
         <strong>Complaint Number:</strong> {complaint.complaint_number}

@@ -49,31 +49,21 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col overflow-hidden">
       {/* Banner */}
       <Banner />
 
       {/* Content */}
-      <div className="flex-grow relative bg-cover bg-center">
-        {/* Background Image and Blur */}
-        <div
-          className="absolute inset-0 bg-cover bg-center filter blur-md"
-          style={{ backgroundImage: "url('/images/background.jpg')" }}
-        ></div>
 
-        {/* Overlay for Darkening */}
-        <div className="absolute inset-0 bg-black opacity-50"></div>
+      {/* Overlay for Darkening */}
+      {/* <div className="absolute inset-0 bg-black opacity-50"></div> */}
 
-        {/* Feature Icons */}
-        <div className="relative z-10 flex flex-col lg:flex-row w-full max-w-7xl p-4 mx-auto pb-24 lg:pb-16">
-          <div className="flex-1 lg:w-3/4">
-            <FeatureIcons features={features} />
-          </div>
+      {/* Feature Icons */}
+      <div className="relative z-10 flex flex-col lg:flex-row w-full max-w-7xl p-4 mx-auto pb-24 lg:pb-16">
+        <div className="flex-1 lg:w-3/4">
+          <FeatureIcons features={features} />
         </div>
       </div>
-
-      {/* Footer */}
-      {/* <Footer /> */}
     </div>
   );
 };

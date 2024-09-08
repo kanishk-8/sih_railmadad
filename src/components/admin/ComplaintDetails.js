@@ -38,7 +38,7 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
   const imageUrl = complaint.image_path;
 
   return (
-    <div className="p-4 border rounded shadow bg-white">
+    <div className="p-4 border rounded-xl shadow bg-white m-3 ">
       <h3 className="text-xl font-bold">Complaint Details</h3>
       <p>
         <strong>PNR Number:</strong> {complaint.pnr_number}
