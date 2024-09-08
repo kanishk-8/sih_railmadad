@@ -62,11 +62,9 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
           <h4 className="font-semibold">Attached Image:</h4>
           <Image
             src={imageUrl}
-            width={100}
-            height={100}
-            layout="responsive"
+            width={500}
+            height={500}
             alt="Complaint Image"
-            className="max-w-full h-auto border mt-2"
           />
         </div>
       )}
