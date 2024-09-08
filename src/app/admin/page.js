@@ -15,19 +15,13 @@ function AdminPortalPage() {
           <nav>
             <ul className="space-y-4 mt-8">
               <li>
-                <Link href="/admin/complaints">
-                  Complaints Page
-                </Link>
+                <Link href="/admin/complaints">Train Complaints Page</Link>
               </li>
               <li>
-                <Link href="/admin/feedback">
-                  Feedback Page
-                </Link>
+                <Link href="/admin/feedback">Station complaint Page</Link>
               </li>
               <li>
-                <Link href="/admin/maintenance">
-                  Maintenance Page
-                </Link>
+                <Link href="/admin/maintenance">Maintenance Page</Link>
               </li>
             </ul>
           </nav>

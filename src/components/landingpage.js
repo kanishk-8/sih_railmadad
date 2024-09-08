@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import GrievanceForm from "./GrievanceForm";
-import Footer from "./Footer";
 import FeatureIcons from "./FeatureIcons";
 import Sidebar from "./Sidebar";
 
@@ -9,14 +8,46 @@ const LandingPage = () => {
   const [selectedOption, setSelectedOption] = useState(null);
 
   const features = [
-    { name: "Ticket Booking", icon: "ticket-booking-icon.jpg", link: "/ticket-booking" },
-    { name: "Train Enquiry", icon: "train-enquiry-icon.png", link: "/train-enquiry" },
-    { name: "Reservation Enquiry", icon: "reservation-enquiry-icon.png", link: "/reservation-enquiry" },
-    { name: "Retiring Room Booking", icon: "retiring-room-booking-icon.jpg", link: "/retiring-room-booking" },
-    { name: "Indian Railways", icon: "indian-railways-icon.png", link: "https://indianrailways.gov.in" },
-    { name: "UTS Ticketing", icon: "uts-ticketing-icon.jpg", link: "/uts-ticketing" },
-    { name: "Freight Business", icon: "freight-business-icon.png", link: "/freight-business" },
-    { name: "Railway Parcel Website", icon: "railway-parcel-icon.png", link: "/railway-parcel" },
+    {
+      name: "Ticket Booking",
+      icon: "ticket-booking-icon.jpg",
+      link: "/ticket-booking",
+    },
+    {
+      name: "Train Enquiry",
+      icon: "train-enquiry-icon.png",
+      link: "/train-enquiry",
+    },
+    {
+      name: "Reservation Enquiry",
+      icon: "reservation-enquiry-icon.png",
+      link: "/reservation-enquiry",
+    },
+    {
+      name: "Retiring Room Booking",
+      icon: "retiring-room-booking-icon.jpg",
+      link: "/retiring-room-booking",
+    },
+    {
+      name: "Indian Railways",
+      icon: "indian-railways-icon.png",
+      link: "https://indianrailways.gov.in",
+    },
+    {
+      name: "UTS Ticketing",
+      icon: "uts-ticketing-icon.jpg",
+      link: "/uts-ticketing",
+    },
+    {
+      name: "Freight Business",
+      icon: "freight-business-icon.png",
+      link: "/freight-business",
+    },
+    {
+      name: "Railway Parcel Website",
+      icon: "railway-parcel-icon.png",
+      link: "/railway-parcel",
+    },
     // Removed the Basic Support entry
   ];
 
@@ -68,12 +99,8 @@ const LandingPage = () => {
           <GrievanceForm onSubmit={handleSubmit} />
         </div>
       </div>
-
-      {/* Footer */}
-      <Footer />
     </div>
   );
 };
 
 export default LandingPage;
-

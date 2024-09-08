@@ -1,11 +1,9 @@
-import TrainComplaintsTable from '@/components/admin/TrainComplaintsTable';
-import StationComplaintsTable from '@/components/admin/StationComplaintsTable';
-
+"use client";
+import ComplaintList from "@/components/admin/Complaintlist";
 const ComplaintsPage = () => {
   return (
     <div>
-      <TrainComplaintsTable />
-      <StationComplaintsTable />
+      <ComplaintList />
     </div>
   );
 };

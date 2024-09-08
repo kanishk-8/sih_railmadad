@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const ComplaintDetails = ({ complaint, fetchComplaints }) => {
+const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
   const [status, setStatus] = useState(complaint.status);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -9,7 +9,7 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:5000/api/update-train-complaint/${complaint.complaint_number}`,
+        `http://localhost:5000/api/update-station-complaint/${complaint.complaint_number}`,
         {
           method: "PUT",
           headers: {
@@ -23,7 +23,7 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
         throw new Error("Error updating complaint status");
       }
 
-      // Update the local status and refetch complaints
+      // Update local status and refetch complaints
       setStatus(newStatus);
       fetchComplaints();
       setLoading(false);
@@ -32,18 +32,17 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
       setLoading(false);
     }
   };
+
   // Build the image URL based on the path stored in the DB
-  console.log(complaint.image_path);
-  // Ensure you're only appending the filename, not multiple /uploads/ directories
   const imageUrl = complaint.image_path
-    ? `/uploads/${complaint.image_path.replace(/^uploads\//, "")}`
+    ? `/uploads/${complaint.image_path}`
     : null;
 
   return (
     <div className="p-4 border rounded shadow">
-      <h3 className="text-xl font-bold">Complaint Details</h3>
+      <h3 className="text-xl font-bold">Station Complaint Details</h3>
       <p>
-        <strong>PNR Number:</strong> {complaint.pnr_number}
+        <strong>Complaint Number:</strong> {complaint.complaint_number}
       </p>
       <p>
         <strong>Description:</strong> {complaint.description}
@@ -57,6 +56,13 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
       <p>
         <strong>Status:</strong> {status}
       </p>
+      <p>
+        <strong>Incident Location:</strong> {complaint.station_location}
+      </p>
+      <p>
+        <strong>Incident Date:</strong> {complaint.incident_date}
+      </p>
+
       {/* Conditionally render the image */}
       {imageUrl && (
         <div className="mt-4">
@@ -83,4 +89,4 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
   );
 };
 
-export default ComplaintDetails;
+export default StationComplaintDetails;
