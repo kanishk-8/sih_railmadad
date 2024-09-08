@@ -32,7 +32,7 @@ const ComplaintList = () => {
   }
 
   return (
-    <div>
+    <div className="p-4">
       {complaints.map((complaint) => (
         <ComplaintDetails
           key={complaint.complaint_number}
