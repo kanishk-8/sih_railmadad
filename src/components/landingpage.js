@@ -53,11 +53,6 @@ const LandingPage = () => {
       {/* Banner */}
       <Banner />
 
-      {/* Content */}
-
-      {/* Overlay for Darkening */}
-      {/* <div className="absolute inset-0 bg-black opacity-50"></div> */}
-
       {/* Feature Icons */}
       <div className="relative z-10 flex flex-col lg:flex-row w-full max-w-7xl p-4 mx-auto pb-24 lg:pb-16">
         <div className="flex-1 lg:w-3/4">

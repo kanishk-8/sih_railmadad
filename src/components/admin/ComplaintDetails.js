@@ -35,8 +35,8 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
   };
   // Build the image URL based on the path stored in the DB
   // Ensure you're only appending the filename, not multiple /uploads/ directories
-  console.log(complaint.image_path);
   const imageUrl = complaint.image_path;
+  console.log(complaint.image_path);
 
   return (
     <div className="p-4 border rounded-xl shadow bg-white m-3 ">
@@ -62,11 +62,9 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
           <h4 className="font-semibold">Attached Image:</h4>
           <Image
             src={imageUrl}
-            width={100}
-            height={100}
-            layout="responsive"
+            width={500}
+            height={500}
             alt="Complaint Image"
-            className="max-w-full h-auto border mt-2"
           />
         </div>
       )}

@@ -1,35 +1,26 @@
-import Footer from "@/components/Footer";
 import Link from "next/link";
 
 function AdminPortalPage() {
   return (
-    <div
-      className="relative h-screen bg-cover bg-center"
-      style={{ backgroundImage: "url('/image.png')" }}
-    >
-      {/* Acrylic Effect */}
-      <div className="absolute inset-0 bg-white/30 backdrop-blur-sm">
-        {/* Content */}
-        <div className="text-red-900 text-4xl font-bold p-8">
-          <h1>Admin Portal</h1>
-          <nav>
-            <ul className="space-y-4 mt-8">
-              <li>
-                <Link href="/admin/complaints">Train Complaints Page</Link>
-              </li>
-              <li>
-                <Link href="/admin/stationcomplaint">
-                  Station complaint Page
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/maintenance">Maintenance Page</Link>
-              </li>
-            </ul>
-          </nav>
-        </div>
+    <div className="text-red-900 h-96 text-4xl font-bold p-8 bg-white m-4 content-center items-center rounded-xl">
+      <h1>Admin Portal</h1>
+      <div className=" flex flex-col space-y-4 mt-8 items-center content-center">
+        <Link href="/admin/complaints">
+          <button className="bg-red-900 text-white px-4 py-2 rounded">
+            Train Complaints Page
+          </button>
+        </Link>
+        <Link href="/admin/stationcomplaint">
+          <button className="bg-red-900 text-white px-4 py-2 rounded">
+            Station Complaint Page
+          </button>
+        </Link>
+        <Link href="/admin/maintenance">
+          <button className="bg-red-900 text-white px-4 py-2 rounded">
+            Maintenance Page
+          </button>
+        </Link>
       </div>
-      <Footer />
     </div>
   );
 }
