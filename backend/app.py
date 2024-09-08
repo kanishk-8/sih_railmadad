@@ -24,15 +24,17 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4','mp3'}
 import os
 
+def extract_filename(image_path):
+    # Define a regular expression pattern to capture the filename after the last directory
+    pattern = re.compile(r'[^/\\]+$')
+    match = pattern.search(image_path)
+    return match.group(0) if match else image_path
+
 def get_full_image_path(image_path):
     if image_path:
         # Get the absolute path of the upload folder
         upload_folder = os.path.abspath(app.config['UPLOAD_FOLDER'])
-        # Ensure that the image_path does not have extra 'uploads/' prefix
-        if image_path.startswith('uploads/'):
-            image_path = image_path[len('uploads/'):]
-        # Join the upload folder with the image path to get the full system path
-        return os.path.join(upload_folder, image_path)
+        return os.path.join(upload_folder, extract_filename(image_path))
     return None  # Return None if image_path is None or empty
 # Helper function to check allowed file extensions
 def allowed_file(filename):
