@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import Image from "next/image";
+import { FaSpinner } from "react-icons/fa"; // Import spinner for loading state
 
 const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
   const [status, setStatus] = useState(complaint.status);
@@ -23,7 +25,7 @@ const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
         throw new Error("Error updating complaint status");
       }
 
-      // Update local status and refetch complaints
+      // Update the local status and refetch complaints
       setStatus(newStatus);
       fetchComplaints();
       setLoading(false);
@@ -34,59 +36,96 @@ const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
   };
 
   // Build the image URL based on the path stored in the DB
-  const imageUrl = complaint.image_path
-    ? `/uploads/${complaint.image_path}`
-    : null;
+  const fileUrl = complaint.image_path;
+  const isVideo = fileUrl && fileUrl.endsWith(".mp4"); // Check if the file is a video
 
   return (
-    <div className="p-4 border rounded-xl shadow bg-white m-3">
-      <h3 className="text-xl font-bold">Station Complaint Details</h3>
-      <p>
-        <strong>Complaint Number:</strong> {complaint.complaint_number}
-      </p>
-      <p>
-        <strong>Description:</strong> {complaint.description}
-      </p>
-      <p>
-        <strong>Category:</strong> {complaint.category}
-      </p>
-      <p>
-        <strong>Priority:</strong> {complaint.priority}
-      </p>
-      <p>
-        <strong>Status:</strong> {status}
-      </p>
-      <p>
-        <strong>Incident Location:</strong> {complaint.station_location}
-      </p>
-      <p>
-        <strong>Incident Date:</strong> {complaint.incident_date}
-      </p>
+    <div className="p-6 border rounded-2xl shadow-lg bg-white m-4 max-w-10-lg flex flex-col md:flex-row">
+      {/* Complaint details on the left */}
+      <div className="flex-1">
+        <h3 className="text-2xl font-bold text-gray-800 mb-4">Station Complaint Details</h3>
+        <div className="space-y-2 text-gray-600">
+          <p>
+            <strong className="text-gray-700">Complaint Number:</strong> {complaint.complaint_number}
+          </p>
+          <p>
+            <strong className="text-gray-700">Description:</strong> {complaint.description}
+          </p>
+          <p>
+            <strong className="text-gray-700">Category:</strong> {complaint.category}
+          </p>
+          <p>
+            <strong className="text-gray-700">Priority:</strong> {complaint.priority}
+          </p>
+          <p>
+            <strong className="text-gray-700">Status:</strong>{" "}
+            <span
+              className={`inline-block px-2 py-1 rounded ${
+                status === "Resolved"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-yellow-100 text-yellow-700"
+              }`}
+            >
+              {status}
+            </span>
+          </p>
+          <p>
+            <strong className="text-gray-700">Incident Location:</strong> {complaint.station_location}
+          </p>
+          <p>
+            <strong className="text-gray-700">Incident Date:</strong> {complaint.incident_date}
+          </p>
+        </div>
 
-      {/* Conditionally render the image */}
-      {imageUrl && (
-        <div className="mt-4">
-          <h4 className="font-semibold">Attached Image:</h4>
-          <img
-            src={imageUrl}
-            alt="Complaint Image"
-            className="max-w-full h-auto border mt-2"
-          />
+        {loading && (
+          <div className="flex items-center space-x-2 mt-4">
+            <FaSpinner className="animate-spin text-green-500" />
+            <p className="text-green-600">Updating status...</p>
+          </div>
+        )}
+        {error && <p className="text-red-500 mt-4">{error}</p>}
+
+        <button
+          className={`mt-6 w-full px-4 py-3 text-white font-semibold rounded-lg shadow-md transition-colors duration-300 ${
+            loading || status === "Resolved"
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-600"
+          }`}
+          onClick={() => updateStatus("Resolved")}
+          disabled={loading || status === "Resolved"}
+        >
+          Mark as Resolved
+        </button>
+      </div>
+
+      {/* Image or video on the right */}
+      {fileUrl && (
+        <div className="flex-1 mt-6 md:mt-0 md:ml-6">
+          <h4 className="font-semibold text-gray-800">Attached File:</h4>
+          <div className="mt-2 rounded-lg overflow-hidden">
+            {isVideo ? (
+              <video
+                controls
+                className="rounded-lg shadow w-80 h-80 md:w-80 md:h-80" // Set consistent size for video
+                src={fileUrl}
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <Image
+                src={fileUrl}
+                width={500}
+                height={500}
+                alt="Complaint Image"
+                className="rounded-lg shadow"
+              />
+            )}
+          </div>
         </div>
       )}
-
-      {loading && <p>Updating status...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-
-      <button
-        className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
-        onClick={() => updateStatus("Resolved")}
-        disabled={loading || status === "Resolved"}
-      >
-        Mark as Resolved
-      </button>
     </div>
   );
 };
 
 export default StationComplaintDetails;
+
