@@ -23,10 +23,13 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Allowed extensions for upload
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4','mp3'}
 
+import os
 def get_full_image_path(image_path):
     if image_path:
-        return os.path.join(app.config['UPLOAD_FOLDER'], image_path)
-    return None
+        # Return the URL path, not the local file system path
+        return f"/uploads/{os.path.basename(image_path)}"
+    return None  # Return None if image_path is None or empty
+
 # Helper function to check allowed file extensions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

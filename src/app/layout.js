@@ -8,7 +8,7 @@ import { AuthProvider, useAuth } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Navbar from "@/components/navbar";
-
+import Footer from "@/components/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 function AuthLayout({ children }) {
@@ -67,6 +67,7 @@ export default function RootLayout({ children }) {
             <div className="absolute inset-0 bg-white/30 backdrop-blur-sm">
               <Navbar />
               <AuthLayout>{children}</AuthLayout>
+              <Footer />
             </div>
           </div>
         </body>

@@ -1,10 +1,11 @@
-import FeedbackPage from '@/components/admin/FeedbackPage';
+"use client";
+import StationComplaintList from "@/components/admin/ShowStationCompaint";
 
 const FeedbackPageContainer = () => {
   return (
     <div>
       <h1>Feedback</h1>
-      <FeedbackPage />
+      <StationComplaintList />
     </div>
   );
 };
