@@ -33,7 +33,13 @@ const StationComplaintList = () => {
   }
 
   return (
-    <div>
+    <div
+      style={{
+        padding: "16px",
+        overflowY: "auto", // Enable vertical scrolling
+        height: "80vh", // Adjust height as needed
+      }}
+    >
       {complaints.map((complaint) => (
         <StationComplaintDetails
           key={complaint.complaint_number}

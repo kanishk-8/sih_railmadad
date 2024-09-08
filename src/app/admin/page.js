@@ -18,7 +18,9 @@ function AdminPortalPage() {
                 <Link href="/admin/complaints">Train Complaints Page</Link>
               </li>
               <li>
-                <Link href="/admin/feedback">Station complaint Page</Link>
+                <Link href="/admin/stationcomplaint">
+                  Station complaint Page
+                </Link>
               </li>
               <li>
                 <Link href="/admin/maintenance">Maintenance Page</Link>

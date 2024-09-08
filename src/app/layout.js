@@ -61,7 +61,7 @@ export default function RootLayout({ children }) {
         <body className={inter.className}>
           <div
             className="relative h-screen bg-cover bg-center"
-            style={{ backgroundImage: "url('/image.png')" }}
+            style={{ backgroundImage: "url('/images/background.jpg')" }}
           >
             {/* Acrylic Effect */}
             <div className="absolute inset-0 bg-white/30 backdrop-blur-sm">

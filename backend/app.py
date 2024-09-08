@@ -32,11 +32,13 @@ def extract_filename(image_path):
 
 def get_full_image_path(image_path):
     if image_path:
-        # Get the absolute path of the upload folder
-        upload_folder = os.path.abspath(app.config['UPLOAD_FOLDER'])
-        return os.path.join(upload_folder, extract_filename(image_path))
+        # Define the base URL where images are served
+        base_url = "http://localhost:5000/uploads/"
+        # Extract the filename from the full path
+        filename = extract_filename(image_path)
+        # Construct the full URL path
+        return os.path.join(base_url, filename)
     return None  # Return None if image_path is None or empty
-# Helper function to check allowed file extensions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
