@@ -33,11 +33,9 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
     }
   };
   // Build the image URL based on the path stored in the DB
-  console.log(complaint.image_path);
   // Ensure you're only appending the filename, not multiple /uploads/ directories
-  const imageUrl = complaint.image_path
-    ? `/uploads/${complaint.image_path.replace(/^uploads\//, "")}`
-    : null;
+  console.log(complaint.image_path);
+  const imageUrl = complaint.image_path;
 
   return (
     <div className="p-4 border rounded shadow">
