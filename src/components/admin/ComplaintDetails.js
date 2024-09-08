@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React, { useState } from "react";
 
 const ComplaintDetails = ({ complaint, fetchComplaints }) => {
@@ -59,8 +60,11 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
       {imageUrl && (
         <div className="mt-4">
           <h4 className="font-semibold">Attached Image:</h4>
-          <img
+          <Image
             src={imageUrl}
+            width={100}
+            height={100}
+            layout="responsive"
             alt="Complaint Image"
             className="max-w-full h-auto border mt-2"
           />
