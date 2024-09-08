@@ -4,10 +4,14 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 import google.generativeai as genai  # Replace with the correct package if necessary
 from flask_cors import CORS
+import re
+from database import db,TrainComplaint,StationComplaint,Appreciation,Enquiry,Suggestion
 
 app = Flask(__name__)
 CORS(app)
-
+app.config['SQLALCHEMY_DATABASE_URI']="sqlite:///IESCP.db"
+db.init_app(app)
+app.app_context().push()
 # Initialize the Google Generative AI client with your API key
 api_key = "AIzaSyB69yTMIeO9VbqvlT9LR9AWipxZJfe9X6o"
 genai.configure(api_key=api_key)
@@ -17,8 +21,12 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Allowed extensions for upload
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4','mp3'}
 
+def get_full_image_path(image_path):
+    if image_path:
+        return os.path.join(app.config['UPLOAD_FOLDER'], image_path)
+    return None
 # Helper function to check allowed file extensions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -39,7 +47,6 @@ def upload_file():
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-
         # Confirm file upload success
         print(f"File uploaded successfully: {filepath}")
 
@@ -54,9 +61,8 @@ def upload_file():
             myfile = genai.get_file(myfile.name)
         # Confirm that the video has finished processing
         print(f"Video processing completed for: {myfile.name}")
-        
         # Return fileUri and mimeType for the client
-        return jsonify({'fileUri': myfile.name, 'mimeType': file.content_type}), 200
+        return jsonify({'fileUri': myfile.name, 'mimeType': file.content_type,'path':filepath}), 200
 
     print(f"File not allowed: {file.filename}")
     return jsonify({'error': 'File not allowed'}), 400
@@ -111,6 +117,321 @@ def generate_content():
         print(f"Error generating content: {e}")
         return jsonify({'error': 'Error generating AI response'}), 500
 
+import json
+import time
+
+@app.route('/api/train-complaint', methods=['POST'])
+def train_complaint():
+    data = request.get_json()
+    user_id = data.get('userId')
+    email = data.get('email')
+    pnr = data.get('pnr')
+    file_uri = data.get('fileUri')
+    mime_type = data.get('mimeType')
+    prompt = data.get('prompt')
+    path=data.get('path')
+    # Ensure required data is present
+    if not user_id or not email or not prompt:
+        return jsonify({'error': 'User ID, email, and prompt are required'}), 400
+
+    try:
+        # Initialize the Generative AI model
+        model = genai.GenerativeModel("gemini-1.5-flash")
+
+        # Construct the prompt for the AI model with strict category enforcement
+        ai_prompt = (
+            f"You are a rail assistance chatbot. The user has given the following complaint with an associated file:\n"
+            f"Complaint Description: {prompt}\n\n"
+            f"Based on the above details, please provide a categorized response in the following JSON format:\n"
+            f"{{'description': '', 'category': '', 'priority': ''}}.\n\n"
+            f"The 'description' should be a summary of the problem description which can be shown to the user, it can contain any metadata or textual data present in the added files also. The 'category' must be one of the "
+            f"following strictly:Medical Assistance,Security,Divyangjan Facilities,Facilities for Women with Special needs,Electrical Equipment,Coach - Cleanliness,Punctuality,Water Availability,Coach - Maintenance,Catering & Vending Services,Staff Behaviour,Corruption / Bribery,Bed Roll,Miscellaneous "
+            f"Any category not in this list should not be provided. The 'priority' should be High, Medium, or Low."
+        )
+
+        # Prepare input data
+        input_data = [ai_prompt]
+
+        # Add file if available
+        if file_uri:
+            file = genai.get_file(file_uri)  # Fetch the file from the AI service
+            input_data.append(file)
+
+        # Generate AI response
+        print(f"Sending request to Generative AI with input: {input_data}")
+        response = model.generate_content(input_data)
+        
+        # Extract JSON response from AI
+        print(f"AI Response: {response.text}")
+        json_match = re.search(r'\{.*?\}', response.text, re.DOTALL)
+        if not json_match:
+            raise ValueError("No valid JSON object found in the AI response.")
+        json_string = json_match.group(0).replace("'", '"')
+
+        # Safely parse the AI response using json.loads
+        ai_response = json.loads(json_string)
+        # Safely parse the AI response using json.loads
+        # Safely parse the AI response using json.loads
+        
+        # Add a random complaint number for now
+        new_complaint = TrainComplaint(
+            category=ai_response.get('category'),
+            priority=ai_response.get('priority'),
+            description=ai_response.get('description'),
+            status='Pending',  # Default status
+            image_path=path,  # Path to the image
+            pnr_number=pnr,
+            user_email=email,
+            user_userid=user_id
+        )
+
+        # Add the complaint to the database
+        db.session.add(new_complaint)
+        db.session.commit()
+        ai_response['complaintNumber'] =  new_complaint.complaint_number
+
+        # Return the AI-generated response
+        return jsonify(ai_response), 200
+
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from AI response: {e}")
+        return jsonify({'error': 'Invalid JSON format in AI response'}), 500
+    except Exception as e:
+        print(f"Error generating content: {e}")
+        return jsonify({'error': 'Error generating AI response'}), 500
+
+@app.route('/api/validate-station-complaint', methods=['POST'])
+def validate_station_complaint():
+    data = request.get_json()
+    input_text = data.get('input')
+
+    if not input_text:
+        return jsonify({'error': 'Input text is required'}), 400
+
+    try:
+        # Initialize the Generative AI model
+        model = genai.GenerativeModel("gemini-1.5-flash")
+
+        # Prompt for extracting station name and incident date
+        ai_prompt = (
+            f"You are a helpful assistant. Extract the station name and incident date from the following input:, the date should be in (day/month/year) format, this should be strictly followed, if no year is given assume 2024 \n\n"
+            f"Input: {input_text}\n\n"
+            f"Please return a JSON object in the following format:\n"
+            f"{{'stationName': '', 'incidentDate': ''}}.\n\n"
+            f"If the station name or date cannot be found, set the value to null."
+        )
+
+        # Send the input to the AI model
+        input_data = [ai_prompt]
+        print(f"Sending request to Gemini AI with input: {input_data}")
+        response = model.generate_content(input_data)
+
+        # Extract JSON response from AI
+        print(f"AI Response: {response.text}")
+        json_match = re.search(r'\{.*?\}', response.text, re.DOTALL)
+        if not json_match:
+            raise ValueError("No valid JSON object found in the AI response.")
+        json_string = json_match.group(0).replace("'", '"')
+
+        # Safely parse the AI response using json.loads
+        ai_response = json.loads(json_string)
+
+        # Ensure stationName and incidentDate are present
+        station_name = ai_response.get('stationName')
+        incident_date = ai_response.get('incidentDate')
+
+        # Return the extracted values or null if not found
+        return jsonify({
+            'stationName': station_name if station_name else None,
+            'incidentDate': incident_date if incident_date else None
+        }), 200
+
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from AI response: {e}")
+        return jsonify({'error': 'Invalid JSON format in AI response'}), 500
+    except Exception as e:
+        print(f"Error generating content: {e}")
+        return jsonify({'error': 'Error generating AI response'}), 500
+
+@app.route('/api/station-complaint', methods=['POST'])
+def station_complaint():
+    data = request.get_json()
+    user_id = data.get('userId')
+    email = data.get('email')
+    location = data.get('location')
+    incident_date = data.get('incidentDate')
+    file_uri = data.get('fileUri')
+    mime_type = data.get('mimeType')
+    prompt = data.get('prompt')
+    path = data.get('path')
+    
+    # Ensure required data is present
+    if not user_id or not email or not prompt or not location or not incident_date:
+        return jsonify({'error': 'User ID, email, prompt, location, and incident date are required'}), 400
+
+    try:
+        # Initialize the Generative AI model
+        model = genai.GenerativeModel("gemini-1.5-flash")
+
+        # Construct the prompt for the AI model with strict category enforcement
+        ai_prompt = (
+            f"You are a rail assistance chatbot. The user has given the following station-related complaint with an associated file:\n"
+            f"Complaint Description: {prompt}\n\n"
+            f"Incident Location: {location}\n"
+            f"Incident Date: {incident_date}\n\n"
+            f"Based on the above details, please provide a categorized response in the following JSON format:\n"
+            f"{{'description': '', 'category': '', 'priority': ''}}.\n\n"
+            f"The 'description' should be a summary of the problem description which can be shown to the user, it can contain any metadata or textual data present in the added files also. The 'category' must be one of the "
+            f"following strictly:Medical Assistance,Security,Divyangjan Facilities,Facilities for Women with Special needs,Unreserved Ticketing,Luggage / Parcels,Reserved Ticketing,Refund of Tickets,Passenger Amenities,Electrical Equipment,Staff Behaviour,Cleanliness,Catering & Vending Services,Water Availability,Goods,Corruption / Bribery,Miscellaneous "
+            f"Any category not in this list should not be provided. The 'priority' should be High, Medium, or Low."
+        )
+
+        # Prepare input data
+        input_data = [ai_prompt]
+
+        # Add file if available
+        if file_uri:
+            file = genai.get_file(file_uri)  # Fetch the file from the AI service
+            input_data.append(file)
+
+        # Generate AI response
+        print(f"Sending request to Generative AI with input: {input_data}")
+        response = model.generate_content(input_data)
+        
+        # Extract JSON response from AI
+        print(f"AI Response: {response.text}")
+        json_match = re.search(r'\{.*?\}', response.text, re.DOTALL)
+        if not json_match:
+            raise ValueError("No valid JSON object found in the AI response.")
+        json_string = json_match.group(0).replace("'", '"')
+
+        # Safely parse the AI response using json.loads
+        ai_response = json.loads(json_string)
+
+        # Add a random complaint number for now
+        new_complaint = StationComplaint(
+            category=ai_response.get('category'),
+            priority=ai_response.get('priority'),
+            description=ai_response.get('description'),
+            status='Pending',  # Default status
+            image_path=path,  # Path to the image
+            station_location=location,
+            incident_date=incident_date,
+            user_email=email,
+            user_userid=user_id
+        )
+
+        # Add the complaint to the database
+        db.session.add(new_complaint)
+        db.session.commit()
+        ai_response['complaintNumber'] = new_complaint.complaint_number
+
+        # Return the AI-generated response
+        return jsonify(ai_response), 200
+
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from AI response: {e}")
+        return jsonify({'error': 'Invalid JSON format in AI response'}), 500
+    except Exception as e:
+        print(f"Error generating content: {e}")
+        return jsonify({'error': 'Error generating AI response'}), 500
+
+@app.route('/api/show-train-complaints', methods=['GET'])
+def get_train_complaints():
+    try:
+        # Query all train complaints
+        train_complaints = TrainComplaint.query.all()
+        
+        # Format the data to be returned as JSON
+        complaints_list = []
+        for complaint in train_complaints:
+            complaints_list.append({
+                'complaint_number': complaint.complaint_number,
+                'category': complaint.category,
+                'priority': complaint.priority,
+                'description': complaint.description,
+                'status': complaint.status,
+                'image_path': get_full_image_path(complaint.image_path) if complaint.image_path else None,  # Full path for image if exists
+                'pnr_number': complaint.pnr_number,
+                'user_email': complaint.user_email,
+                'user_userid': complaint.user_userid
+            })
+        
+        return jsonify({'train_complaints': complaints_list}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/show-station-complaints', methods=['GET'])
+def get_station_complaints():
+    try:
+        # Query all station complaints
+        station_complaints = StationComplaint.query.all()
+
+        # Format the data to be returned as JSON
+        complaints_list = []
+        for complaint in station_complaints:
+            complaints_list.append({
+                'complaint_number': complaint.complaint_number,
+                'category': complaint.category,
+                'priority': complaint.priority,
+                'description': complaint.description,
+                'status': complaint.status,
+                'image_path': get_full_image_path(complaint.image_path) if complaint.image_path else None,  # Full path for image if exists
+                'station_location': complaint.station_location,
+                'incident_date': complaint.incident_date,
+                'user_email': complaint.user_email,
+                'user_userid': complaint.user_userid
+            })
+        
+        return jsonify({'station_complaints': complaints_list}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/update-train-complaint/<complaint_number>', methods=['PUT'])
+def update_train_complaint_status(complaint_number):
+    try:
+        # Get the complaint from the database by complaint number
+        complaint = TrainComplaint.query.filter_by(complaint_number=complaint_number).first()
+
+        if not complaint:
+            return jsonify({'error': 'Train complaint not found'}), 404
+
+        # Get the new status from the request body
+        new_status = request.json.get('status')
+        if new_status not in ['Under Review', 'Resolved']:
+            return jsonify({'error': 'Invalid status. Status must be "Under Review" or "Resolved".'}), 400
+
+        # Update the complaint status
+        complaint.status = new_status
+        db.session.commit()
+
+        return jsonify({'message': f'Train complaint {complaint_number} status updated to {new_status}'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# Function to update the status of a station complaint
+@app.route('/api/update-station-complaint/<complaint_number>', methods=['PUT'])
+def update_station_complaint_status(complaint_number):
+    try:
+        # Get the complaint from the database by complaint number
+        complaint = StationComplaint.query.filter_by(complaint_number=complaint_number).first()
+
+        if not complaint:
+            return jsonify({'error': 'Station complaint not found'}), 404
+
+        # Get the new status from the request body
+        new_status = request.json.get('status')
+        if new_status not in ['Under Review', 'Resolved']:
+            return jsonify({'error': 'Invalid status. Status must be "Under Review" or "Resolved".'}), 400
+
+        # Update the complaint status
+        complaint.status = new_status
+        db.session.commit()
+
+        return jsonify({'message': f'Station complaint {complaint_number} status updated to {new_status}'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
