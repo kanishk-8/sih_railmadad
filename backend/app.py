@@ -17,7 +17,7 @@ api_key = "AIzaSyB69yTMIeO9VbqvlT9LR9AWipxZJfe9X6o"
 genai.configure(api_key=api_key)
 
 # Configure upload folder
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'static'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Allowed extensions for upload
