@@ -71,7 +71,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="container mx-auto max-w-md p-4">
+    <div className="bg-white mt-4 rounded-xl p-10 container mx-auto max-w-md ">
       <h1 className="text-2xl font-bold text-center mb-6">Sign Up</h1>
       <div className="mb-6">
         <h2 className="text-xl mb-2">Sign Up with Email</h2>

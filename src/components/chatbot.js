@@ -88,7 +88,6 @@ function ChatBot() {
       }
   
       if (complaintType === "Train") {
-        // Train complaint logic (unchanged)
         const complaintData = {
           userId: user.uid,
           email: useremail,
@@ -98,32 +97,42 @@ function ChatBot() {
           path,
           prompt: inputValue,
         };
-  
+      
         const genRes = await fetch("http://localhost:5000/api/train-complaint", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(complaintData),
         });
-  
-        if (!genRes.ok) throw new Error("Error generating AI response");
-  
-        const { description, category, priority, complaintNumber } = await genRes.json();
-  
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            text: `Your train complaint has been lodged with complaint number ${complaintNumber} in category '${category}', with priority '${priority}'. Description: ${description}. You can track your application using the 'Track your concern' option.`,
-            isBot: true,
-          },
-          { text: "Do you have any other concerns? (yes/no)", isBot: true },
-        ]);
-        setWaitingForMoreComplaints(true);
-  
-      } else if (complaintType === "Station") {
+      
+        const result = await genRes.json();
+      
+        if (result.isRelevant === false) {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              text: "The complaint is not relevant to rail assistance. Please enter information related to rail assistance.",
+              isBot: true,
+            },
+          ]);
+        } else if (result.isRelevant === true) {
+          const { description, category, priority, complaintNumber } = result;
+      
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              text: `Your train complaint has been lodged with complaint number ${complaintNumber} in category '${category}', with priority '${priority}'. Description: ${description}. You can track your application using the 'Track your concern' option.`,
+              isBot: true,
+            },
+            { text: "Do you have any other concerns? (yes/no)", isBot: true },
+          ]);
+          setWaitingForMoreComplaints(true);
+        }
+      }
+      else if (complaintType === "Station") {
         if (isWaitingForIssueDetails && validatedStationInfo) {
           // User has already provided station name and date, now providing issue details
           const { stationName, incidentDate } = validatedStationInfo;
-  
+      
           const complaintData = {
             userId: user.uid,
             email: useremail,
@@ -134,30 +143,39 @@ function ChatBot() {
             path,
             prompt: inputValue,     // Now the inputValue represents the issue details
           };
-  
+      
           const genRes = await fetch("http://localhost:5000/api/station-complaint", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(complaintData),
           });
-  
-          if (!genRes.ok) throw new Error("Error generating AI response");
-  
-          const { description, category, priority, complaintNumber } = await genRes.json();
-  
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              text: `Your station complaint has been lodged with complaint number ${complaintNumber} in category '${category}', with priority '${priority}'. Description: ${description}. You can track your application using the 'Track your concern' option.`,
-              isBot: true,
-            },
-            { text: "Do you have any other concerns? (yes/no)", isBot: true },
-          ]);
-  
-          setIsWaitingForIssueDetails(false); // Reset the flag
-          setValidatedStationInfo(null); // Clear the station info
-          setWaitingForMoreComplaints(true);
-  
+      
+          const result = await genRes.json();
+      
+          if (result.isRelevant === false) {
+            // If the input is irrelevant, ask for relevant complaint details again
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              {
+                text: "The complaint is not relevant to rail assistance. Please provide a relevant issue related to the station.",
+                isBot: true,
+              },
+            ]);
+          } else if (result.isRelevant === true) {
+            const { description, category, priority, complaintNumber } = result;
+      
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              {
+                text: `Your station complaint has been lodged with complaint number ${complaintNumber} in category '${category}', with priority '${priority}'. Description: ${description}. You can track your application using the 'Track your concern' option.`,
+                isBot: true,
+              },
+              { text: "Do you have any other concerns? (yes/no)", isBot: true },
+            ]);
+            setWaitingForMoreComplaints(true);
+            setIsWaitingForIssueDetails(false); // Reset the flag
+            setValidatedStationInfo(null); // Clear the station info
+          }
         } else {
           // First step: validate the station name and incident date
           const stationRes = await fetch("http://localhost:5000/api/validate-station-complaint", {
@@ -165,10 +183,10 @@ function ChatBot() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ input: inputValue }), // Send the raw unstructured input to the backend
           });
-  
+      
           const stationValidation = await stationRes.json();
           const { stationName, incidentDate } = stationValidation;
-  
+      
           if (!stationName || !incidentDate) {
             // If stationName or incidentDate is null or empty, prompt for re-entry
             setMessages((prevMessages) => [
@@ -178,7 +196,7 @@ function ChatBot() {
             setLoading(false);
             return;
           }
-  
+      
           // Station and date validated successfully
           setValidatedStationInfo({ stationName, incidentDate }); // Store validated info
           setIsWaitingForIssueDetails(true); // Set flag to wait for issue details
@@ -187,8 +205,56 @@ function ChatBot() {
             { text: "Station validated. Please provide details about your issue, including any photos, videos, or audio.", isBot: true },
           ]);
         }
-  
-      } else {
+      }
+      else if (complaintType === "Track your concerns") {
+        try {
+          const trackRes = await fetch("http://localhost:5000/api/track-complaint-status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input: inputValue }),
+          });
+      
+          if (!trackRes.ok) {
+            throw new Error("Failed to track complaint.");
+          }
+      
+          const trackResult = await trackRes.json();
+      
+          if (trackResult.error) {
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              {
+                text: "There was an error tracking your complaint. Please make sure the complaint number is correct.",
+                isBot: true,
+              },
+            ]);
+          } else {
+            const { complaintNumber, status } = trackResult;
+      
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              {
+                text: `Your complaint status is: ${status}`,
+                isBot: true,
+              },
+              { text: "Do you have any other concerns? (yes/no)", isBot: true },
+            ]);
+          }
+        } catch (error) {
+          console.error("Error tracking complaint:", error);
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              text: "There was an error connecting to the complaint tracking service. Please try again later.",
+              isBot: true,
+            },
+          ]);
+        }
+      
+        setWaitingForMoreComplaints(true);
+      }
+           
+       else {
         // Placeholder for other complaint types
         setMessages((prevMessages) => [
           ...prevMessages,
@@ -233,6 +299,9 @@ function ChatBot() {
     } 
     else if (type === "Station") {
       setMessages([{ text: "Please provide the station name and the date of the incident.", isBot: true }]);
+    }
+    else if(type === "Track your concerns"){
+      setMessages([{ text: "Please enter your complaint number.", isBot: true }]);
     }
     else {
       let message;

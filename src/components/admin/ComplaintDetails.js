@@ -37,7 +37,7 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
 
   // Build the image URL based on the path stored in the DB
   const fileUrl = complaint.image_path; // Can be an image or video URL
-  const isVideo = fileUrl.endsWith(".mp4"); // Check if the file is a video
+  const isVideo = fileUrl?.endsWith(".mp4"); // Check if the file is a video
 
   return (
     <div className="p-6 border rounded-2xl shadow-lg bg-white m-4 max-w-10-lg flex flex-col md:flex-row">
@@ -45,6 +45,9 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
       <div className="flex-1">
         <h3 className="text-2xl font-bold text-gray-800 mb-4">Complaint Details</h3>
         <div className="space-y-2 text-gray-600">
+          <p>
+            <strong className="text-gray-700">PNR Number:</strong> {complaint.complaint_number}
+          </p>
           <p>
             <strong className="text-gray-700">PNR Number:</strong> {complaint.pnr_number}
           </p>
@@ -56,6 +59,9 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
           </p>
           <p>
             <strong className="text-gray-700">Priority:</strong> {complaint.priority}
+          </p>
+          <p>
+            <strong className="text-gray-700">Complainant Email:</strong> {complaint.user_email}
           </p>
           <p>
             <strong className="text-gray-700">Status:</strong>{" "}
@@ -79,6 +85,7 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
         )}
         {error && <p className="text-red-500 mt-4">{error}</p>}
 
+        {/* Button to mark complaint as "Resolved" */}
         <button
           className={`mt-6 w-full px-4 py-3 text-white font-semibold rounded-lg shadow-md transition-colors duration-300 ${
             loading || status === "Resolved"
@@ -90,36 +97,49 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
         >
           Mark as Resolved
         </button>
+
+        {/* Button to mark complaint as "Under Review" */}
+        <button
+          className={`mt-3 w-full px-4 py-3 text-white font-semibold rounded-lg shadow-md transition-colors duration-300 ${
+            loading || status === "Under Review"
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-yellow-500 hover:bg-yellow-600"
+          }`}
+          onClick={() => updateStatus("Under Review")}
+          disabled={loading || status === "Under Review"}
+        >
+          Mark as Under Review
+        </button>
       </div>
 
       {/* Image or video on the right */}
       {fileUrl && (
-  <div className="flex-1 mt-6 md:mt-0 md:ml-6">
-    <h4 className="font-semibold text-gray-800">Attached File:</h4>
-    <div className="mt-2 rounded-lg overflow-hidden">
-      {isVideo ? (
-        <video
-          controls
-          className="rounded-lg shadow w-80 h-80 md:w-80 md:h-82" // Use Tailwind classes for width and height
-          src={fileUrl}
-        >
-          Your browser does not support the video tag.
-        </video>
-      ) : (
-        <Image
-          src={fileUrl}
-          width={500}
-          height={500}
-          alt="Complaint Image"
-          className="rounded-lg shadow"
-        />
+        <div className="flex-1 mt-6 md:mt-0 md:ml-6">
+          <h4 className="font-semibold text-gray-800">Attached File:</h4>
+          <div className="mt-2 rounded-lg overflow-hidden">
+            {isVideo ? (
+              <video
+                controls
+                className="rounded-lg shadow w-80 h-80 md:w-80 md:h-82"
+                src={fileUrl}
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <Image
+                src={fileUrl}
+                width={500}
+                height={500}
+                alt="Complaint Image"
+                className="rounded-lg shadow"
+              />
+            )}
+          </div>
+        </div>
       )}
-    </div>
-  </div>
-)}
-
     </div>
   );
 };
 
 export default ComplaintDetails;
+
