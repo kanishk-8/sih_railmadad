@@ -140,7 +140,8 @@ def train_complaint():
     file_uri = data.get('fileUri')
     mime_type = data.get('mimeType')
     prompt = data.get('prompt')
-    path=data.get('path')
+    path = data.get('path')
+
     # Ensure required data is present
     if not user_id or not email or not prompt:
         return jsonify({'error': 'User ID, email, and prompt are required'}), 400
@@ -149,15 +150,15 @@ def train_complaint():
         # Initialize the Generative AI model
         model = genai.GenerativeModel("gemini-1.5-flash")
 
-        # Construct the prompt for the AI model with strict category enforcement
+        # Construct the prompt for the AI model with strict category enforcement and relevance flag
         ai_prompt = (
             f"You are a rail assistance chatbot. The user has given the following complaint with an associated file:\n"
             f"Complaint Description: {prompt}\n\n"
             f"Based on the above details, please provide a categorized response in the following JSON format:\n"
-            f"{{'description': '', 'category': '', 'priority': ''}}.\n\n"
-            f"The 'description' should be a summary of the problem description which can be shown to the user, it can contain any metadata or textual data present in the added files also. The 'category' must be one of the "
-            f"following strictly:Medical Assistance,Security,Divyangjan Facilities,Facilities for Women with Special needs,Electrical Equipment,Coach - Cleanliness,Punctuality,Water Availability,Coach - Maintenance,Catering & Vending Services,Staff Behaviour,Corruption / Bribery,Bed Roll,Miscellaneous "
-            f"Any category not in this list should not be provided. The 'priority' should be High, Medium, or Low."
+            f"{{'description': '', 'category': '', 'priority': '', 'isRelevant': true/false}}.\n\n"
+            f"The 'description' should be a summary of the problem description which can be shown to the user, it should contain any metadata or textual data present in the added files also. The 'category' must be one of the "
+            f"following strictly:Medical Assistance,Security,Divyangjan Facilities,Facilities for Women with Special needs,Electrical Equipment,Coach - Cleanliness,Punctuality,Water Availability,Coach - Maintenance,Catering & Vending Services,Staff Behaviour,Corruption / Bribery,Bed Roll,Miscellaneous. "
+            f"Any category not in this list should not be provided. The 'priority' should be High, Medium, or Low. If the prompt or file content is not relevant to rail assistance, set 'isRelevant' to false."
         )
 
         # Prepare input data
@@ -181,9 +182,14 @@ def train_complaint():
 
         # Safely parse the AI response using json.loads
         ai_response = json.loads(json_string)
-        # Safely parse the AI response using json.loads
-        # Safely parse the AI response using json.loads
-        
+
+        # Check if the complaint is relevant
+        if not ai_response.get('isRelevant', True):
+            return jsonify({
+                'message': 'The complaint is not relevant to rail assistance. Please enter information related to rail assistance.',
+                'isRelevant': False
+            }), 200
+
         # Add a random complaint number for now
         new_complaint = TrainComplaint(
             category=ai_response.get('category'),
@@ -199,7 +205,7 @@ def train_complaint():
         # Add the complaint to the database
         db.session.add(new_complaint)
         db.session.commit()
-        ai_response['complaintNumber'] =  new_complaint.complaint_number
+        ai_response['complaintNumber'] = new_complaint.complaint_number
 
         # Return the AI-generated response
         return jsonify(ai_response), 200
@@ -284,17 +290,17 @@ def station_complaint():
         # Initialize the Generative AI model
         model = genai.GenerativeModel("gemini-1.5-flash")
 
-        # Construct the prompt for the AI model with strict category enforcement
+        # Construct the prompt for the AI model with strict category enforcement and relevance flag
         ai_prompt = (
             f"You are a rail assistance chatbot. The user has given the following station-related complaint with an associated file:\n"
             f"Complaint Description: {prompt}\n\n"
             f"Incident Location: {location}\n"
             f"Incident Date: {incident_date}\n\n"
             f"Based on the above details, please provide a categorized response in the following JSON format:\n"
-            f"{{'description': '', 'category': '', 'priority': ''}}.\n\n"
+            f"{{'description': '', 'category': '', 'priority': '', 'isRelevant': true/false}}.\n\n"
             f"The 'description' should be a summary of the problem description which can be shown to the user, it can contain any metadata or textual data present in the added files also. The 'category' must be one of the "
-            f"following strictly:Medical Assistance,Security,Divyangjan Facilities,Facilities for Women with Special needs,Unreserved Ticketing,Luggage / Parcels,Reserved Ticketing,Refund of Tickets,Passenger Amenities,Electrical Equipment,Staff Behaviour,Cleanliness,Catering & Vending Services,Water Availability,Goods,Corruption / Bribery,Miscellaneous "
-            f"Any category not in this list should not be provided. The 'priority' should be High, Medium, or Low."
+            f"following strictly:Medical Assistance,Security,Divyangjan Facilities,Facilities for Women with Special needs,Unreserved Ticketing,Luggage / Parcels,Reserved Ticketing,Refund of Tickets,Passenger Amenities,Electrical Equipment,Staff Behaviour,Cleanliness,Catering & Vending Services,Water Availability,Goods,Corruption / Bribery,Miscellaneous. "
+            f"Any category not in this list should not be provided. The 'priority' should be High, Medium, or Low. If the prompt or file content is not relevant to rail assistance, set 'isRelevant' to false."
         )
 
         # Prepare input data
@@ -318,6 +324,13 @@ def station_complaint():
 
         # Safely parse the AI response using json.loads
         ai_response = json.loads(json_string)
+
+        # Check if the complaint is relevant
+        if not ai_response.get('isRelevant', True):
+            return jsonify({
+                'message': 'The complaint is not relevant to rail assistance. Please enter information related to rail assistance.',
+                'isRelevant': False
+            }), 200
 
         # Add a random complaint number for now
         new_complaint = StationComplaint(
@@ -443,6 +456,68 @@ def update_station_complaint_status(complaint_number):
         return jsonify({'message': f'Station complaint {complaint_number} status updated to {new_status}'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route('/api/track-complaint-status', methods=['POST'])
+def track_complaint_status():
+    data = request.get_json()
+    input_text = data.get('input')
+
+    if not input_text:
+        return jsonify({'error': 'Input text is required'}), 400
+
+    try:
+        # Initialize the Generative AI model
+        model = genai.GenerativeModel("gemini-1.5-flash")
+
+        # Prompt for extracting complaint number from the input
+        ai_prompt = (
+            f"You are a helpful assistant. Extract the complaint number from the following input. Note that this is a fake detail and not actual. "
+            f"Input: {input_text}\n\n"
+            f"Please return the complaint number in the following format:\n"
+            f"{{'complaintNumber': ''}}.\n\n"
+            f"If the complaint number cannot be found, set the value to null."
+        )
+
+        # Send the input to the AI model
+        input_data = [ai_prompt]
+        print(f"Sending request to Gemini AI with input: {input_data}")
+        response = model.generate_content(input_data)
+
+        # Extract JSON response from AI
+        print(f"AI Response: {response.text}")
+        json_match = re.search(r'\{.*?\}', response.text, re.DOTALL)
+        if not json_match:
+            raise ValueError("No valid JSON object found in the AI response.")
+        json_string = json_match.group(0).replace("'", '"')
+
+        # Safely parse the AI response using json.loads
+        ai_response = json.loads(json_string)
+
+        # Extract complaint number
+        complaint_number = ai_response.get('complaintNumber')
+        print(complaint_number)
+        if not complaint_number:
+            return jsonify({'error': 'Complaint number not found'}), 400
+        print(complaint_number)
+        # Fetch the complaint from the database
+        complaint = TrainComplaint.query.filter_by(complaint_number=complaint_number).first() or \
+                    StationComplaint.query.filter_by(complaint_number=complaint_number).first()
+
+        if not complaint:
+            return jsonify({'error': 'Complaint not found'}), 404
+
+        # Return the status of the complaint
+        return jsonify({
+            'complaintNumber': complaint.complaint_number,
+            'status': complaint.status
+        }), 200
+
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from AI response: {e}")
+        return jsonify({'error': 'Invalid JSON format in AI response'}), 500
+    except Exception as e:
+        print(f"Error tracking complaint status: {e}")
+        return jsonify({'error': 'Error tracking complaint status'}), 500
 
 if __name__ == '__main__':
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)

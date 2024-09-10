@@ -9,6 +9,7 @@ const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
 
   const updateStatus = async (newStatus) => {
     setLoading(true);
+    setError(null); // Reset error
     try {
       const response = await fetch(
         `http://localhost:5000/api/update-station-complaint/${complaint.complaint_number}`,
@@ -37,7 +38,7 @@ const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
 
   // Build the image URL based on the path stored in the DB
   const fileUrl = complaint.image_path;
-  const isVideo = fileUrl && fileUrl.endsWith(".mp4"); // Check if the file is a video
+  const isVideo = fileUrl?.endsWith(".mp4"); // Check if the file is a video
 
   return (
     <div className="p-6 border rounded-2xl shadow-lg bg-white m-4 max-w-10-lg flex flex-col md:flex-row">
@@ -75,6 +76,9 @@ const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
           <p>
             <strong className="text-gray-700">Incident Date:</strong> {complaint.incident_date}
           </p>
+          <p>
+            <strong className="text-gray-700">Complainant Email:</strong> {complaint.user_email}
+          </p>
         </div>
 
         {loading && (
@@ -85,6 +89,7 @@ const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
         )}
         {error && <p className="text-red-500 mt-4">{error}</p>}
 
+        {/* Mark as Resolved Button */}
         <button
           className={`mt-6 w-full px-4 py-3 text-white font-semibold rounded-lg shadow-md transition-colors duration-300 ${
             loading || status === "Resolved"
@@ -96,6 +101,19 @@ const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
         >
           Mark as Resolved
         </button>
+
+        {/* Mark as Under Review Button */}
+        <button
+          className={`mt-3 w-full px-4 py-3 text-white font-semibold rounded-lg shadow-md transition-colors duration-300 ${
+            loading || status === "Under Review"
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-yellow-500 hover:bg-yellow-600"
+          }`}
+          onClick={() => updateStatus("Under Review")}
+          disabled={loading || status === "Under Review"}
+        >
+          Mark as Under Review
+        </button>
       </div>
 
       {/* Image or video on the right */}
@@ -106,7 +124,7 @@ const StationComplaintDetails = ({ complaint, fetchComplaints }) => {
             {isVideo ? (
               <video
                 controls
-                className="rounded-lg shadow w-80 h-80 md:w-80 md:h-80" // Set consistent size for video
+                className="rounded-lg shadow w-80 h-80 md:w-80 md:h-80"
                 src={fileUrl}
               >
                 Your browser does not support the video tag.
