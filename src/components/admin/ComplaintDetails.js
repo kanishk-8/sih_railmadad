@@ -46,7 +46,7 @@ const ComplaintDetails = ({ complaint, fetchComplaints }) => {
         <h3 className="text-2xl font-bold text-gray-800 mb-4">Complaint Details</h3>
         <div className="space-y-2 text-gray-600">
           <p>
-            <strong className="text-gray-700">PNR Number:</strong> {complaint.complaint_number}
+            <strong className="text-gray-700">Complaint Number:</strong> {complaint.complaint_number}
           </p>
           <p>
             <strong className="text-gray-700">PNR Number:</strong> {complaint.pnr_number}

@@ -158,7 +158,7 @@ def train_complaint():
             f"{{'description': '', 'category': '', 'priority': '', 'isRelevant': true/false}}.\n\n"
             f"The 'description' should be a summary of the problem description which can be shown to the user, it should contain any metadata or textual data present in the added files also. The 'category' must be one of the "
             f"following strictly:Medical Assistance,Security,Divyangjan Facilities,Facilities for Women with Special needs,Electrical Equipment,Coach - Cleanliness,Punctuality,Water Availability,Coach - Maintenance,Catering & Vending Services,Staff Behaviour,Corruption / Bribery,Bed Roll,Miscellaneous. "
-            f"Any category not in this list should not be provided. The 'priority' should be High, Medium, or Low. If the prompt or file content is not relevant to rail assistance, set 'isRelevant' to false."
+            f"Any category not in this list should not be provided. The 'priority' should be High, Medium, or Low. If the prompt or the request or the file content is not relevant to rail assistance, set 'isRelevant' to false.Dont include any apostrophe in the description"
         )
 
         # Prepare input data
@@ -300,7 +300,7 @@ def station_complaint():
             f"{{'description': '', 'category': '', 'priority': '', 'isRelevant': true/false}}.\n\n"
             f"The 'description' should be a summary of the problem description which can be shown to the user, it can contain any metadata or textual data present in the added files also. The 'category' must be one of the "
             f"following strictly:Medical Assistance,Security,Divyangjan Facilities,Facilities for Women with Special needs,Unreserved Ticketing,Luggage / Parcels,Reserved Ticketing,Refund of Tickets,Passenger Amenities,Electrical Equipment,Staff Behaviour,Cleanliness,Catering & Vending Services,Water Availability,Goods,Corruption / Bribery,Miscellaneous. "
-            f"Any category not in this list should not be provided. The 'priority' should be High, Medium, or Low. If the prompt or file content is not relevant to rail assistance, set 'isRelevant' to false."
+            f"Any category not in this list should not be provided. The 'priority' should be High, Medium, or Low. If the prompt or the request or the file content is not relevant to rail assistance, set 'isRelevant' to false.Dont include any apostrophe in the description"
         )
 
         # Prepare input data
